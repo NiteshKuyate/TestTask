@@ -1,5 +1,6 @@
 <?php
 namespace Brainvire\Customdiscount\Model\Total\Quote;
+use Brainvire\Customdiscount\Model\CustomdiscountFactory;
 
 class Discount extends \Magento\Quote\Model\Quote\Address\Total\AbstractTotal
 {
@@ -8,7 +9,7 @@ class Discount extends \Magento\Quote\Model\Quote\Address\Total\AbstractTotal
    public $discountAmount;
    
    public function __construct(
-       \Brainvire\Customdiscount\Model\CustomdiscountFactory  $_modelCustomDiscountFactory
+       CustomdiscountFactory $_modelCustomDiscountFactory
    ){
        $this->_modelCustomDiscountFactory = $_modelCustomDiscountFactory;
    }
@@ -42,15 +43,18 @@ class Discount extends \Magento\Quote\Model\Quote\Address\Total\AbstractTotal
                    ->addFieldToFilter('status',['eq' => 1]);
 
         if(count($collection) > 0) {
-           $type = $collection->getDiscountType();
-           $value = $collection->getDiscountAmount();
+         
+         foreach($collection as $item){
+             $type = $item['discount_type'];
+             $value = $item['discount_amount'];
 
-           if($type == "fixed") {
-              return $value;
-           } else if($type == "percentage") {
-              $productPriceBySku = floatval($productPriceBySku );
-              $discount = $productPriceBySku * (intval($value)/100 ) ;
-              return $discount;
+             if($type == "fixed") {
+                return $value;
+             } else if($type == "percentage") {
+                $productPriceBySku = floatval($productPriceBySku );
+                $discount = $productPriceBySku * (intval($value)/100 ) ;
+                return $discount;
+            }
           }
         } else {
             return 0;
@@ -58,7 +62,7 @@ class Discount extends \Magento\Quote\Model\Quote\Address\Total\AbstractTotal
     }
 
     protected function getBrainvireCustomDiscount($quote,$total) {
-
+      $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
       $items = $quote->getAllItems();
       foreach($items as $item) {
         $productCollection = $objectManager
